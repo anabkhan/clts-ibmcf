@@ -16,8 +16,6 @@
     "url": "https://github.com/IBM-Cloud/get-started-node"
   },
   "dependencies": {
-    "@cloudant/cloudant": "^3.0.2",
-    "androidjs": "^2.0.4",
     "bitfield": "^0.1.0",
     "bncode": "^0.5.2",
     "body-parser": "^1.17.x",

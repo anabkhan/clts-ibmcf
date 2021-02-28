@@ -86,7 +86,8 @@
 				  data: JSON.stringify({name: name })
 				})
                 .done(function(data) {
-                    var table = $('<table>').addClass('foo');
+                    $('#search-results').remove();
+                    var table = $('<table>').addClass('foo').attr("id", "search-results");
                     for(i=0; i<data.length; i++){
                         var row = $('<tr>').addClass('bar');
                         row.append($('<td>').addClass('bar').text(data[i].title))

@@ -1,5 +1,8 @@
 FROM node:6-alpine
 
+RUN apk update && apk upgrade && \
+    apk add --no-cache git
+
 ADD views /app/views
 ADD torrent-stream /app/torrent-stream
 ADD package.json /app

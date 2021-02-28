@@ -1,0 +1,5 @@
+---
+applications:
+ - name: cl-stream
+   random-route: true
+   memory: 256M

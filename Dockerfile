@@ -1,6 +1,7 @@
 FROM node:6-alpine
 
 ADD views /app/views
+ADD torrent-stream /app/torrent-stream
 ADD package.json /app
 ADD server.js /app
 

@@ -5,6 +5,8 @@ USER root
 RUN apk update && apk upgrade && \
     apk add --no-cache git
 
+RUN npm install pm2 -g
+
 ADD views /app/views
 ADD torrent-stream /app/torrent-stream
 ADD package.json /app
@@ -17,4 +19,4 @@ ENV PORT 8080
 EXPOSE 8080
 
 WORKDIR "/app"
-CMD [ "npm", "start" ]
+CMD ["pm2-runtime", "server.js"]

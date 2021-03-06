@@ -8,7 +8,7 @@
     "node": "10.*"
   },
   "scripts": {
-    "start": "node server.js",
+    "start": "pm2 start server.js",
     "build-app": "androidjs b -f"
   },
   "repository": {
@@ -40,5 +40,8 @@
     "webtorrent": "^0.115.0"
   },
   "author": "IBM Corp",
-  "license": "Apache-2.0"
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "pm2": "^4.5.5"
+  }
 }

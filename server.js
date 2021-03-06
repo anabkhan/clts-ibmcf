@@ -88,7 +88,8 @@ app.post("/api/visitors", function (request, response) {
 
   var category = request.body.category | 'Movies';
 
-  TorrentSearchApi.enableProvider('1337x');
+  TorrentSearchApi.enableProvider('ThePirateBay');
+  // TorrentSearchApi.enableProvider('1337x');
   
   // Search '1080' in 'Movies' category and limit to 20 results
   const torrents = TorrentSearchApi.search(query, category, 20);
@@ -212,7 +213,7 @@ app.use(express.static(__dirname + '/views'));
 
 
 
-var port = process.env.PORT || 8080
+var port = process.env.PORT || 3000
 app.listen(port, function() {
     console.log("To view your app, open this link in your browser: http://localhost:" + port);
 });
@@ -267,7 +268,7 @@ function getTorrentFiles(req, res, torrentId) {
           id: engine.infoHash
         });
       }
-    engines[engine.infoHash] = engine;
+    // engines[engine.infoHash] = engine;
     res.end(JSON.stringify({response,torrentId}))
     });
   // }) 
@@ -315,6 +316,8 @@ function getTorrentFileLink(magnetStr, onSuccess) {
 }
 
 var engines = {};
+var staleEngines = {};
+var enginepieces = {};
 
 app.get('/getData', function (req, res) {
   console.log(req.query);
@@ -324,6 +327,10 @@ app.get('/getData', function (req, res) {
   fileName = fileName.trim().replace(/ /g,'');
   var engine = engines[id];
   if(engine) {
+    if (staleEngines[id]) {
+      clearTimeout(staleEngines[id]);
+      staleEngines[id] = null;
+    }
     streamTorrentFileToResponse(req, res, fileName, engine);
   } else {
     engine = torrentStream(req.query.magnet);
@@ -399,7 +406,7 @@ function streamTorrentFileToResponse(req, res, fileName, engine) {
   endPiece = ((end + file.offset) / pieceLength) | 0;
   console.log(endPiece)
   console.log('start-piece',startPiece);
-  pieces = {};
+  pieces = enginepieces[req.query.id] | {};
   _critical = Math.min(1024 * 1024 / pieceLength, 2) | 1;
   _waitingFor = -1;
   _offset = offset - startPiece * pieceLength;
@@ -451,7 +458,6 @@ function streamTorrentFileToResponse(req, res, fileName, engine) {
   engine.select(startPiece, _nextPiece, true, null)
 
   engine.on('download', (index, buffer) => {
-    console.log('pushing buffer to stream for', index);
     if(_waitingFor === index) {
       console.log('pushing buffer to stream for', index);
       if (_offset) {
@@ -472,5 +478,10 @@ function streamTorrentFileToResponse(req, res, fileName, engine) {
     engines[req.query.id] = null;
     pieces = {};
     stream.destroy();
+    // staleEngines[req.query.id] = setTimeout(() => {
+    //   engines[req.query.id].destroy();
+    //   engines[req.query.id] = null;
+    //   enginepieces[req.query.id] = null;
+    // }, 60000);
   });
 }

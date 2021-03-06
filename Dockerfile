@@ -2,7 +2,8 @@ FROM node:12-alpine
 
 USER root
 
-RUN chmod -R 777 /
+RUN mkdir /pm2
+RUN chmod -R 777 /pm2
 
 RUN apk update && apk upgrade && \
     apk add --no-cache git

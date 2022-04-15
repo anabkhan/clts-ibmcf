@@ -22,10 +22,11 @@
     <script src="js/lib/jquery.i18n/jquery.i18n.emitter.js"></script>
     <script src="js/lib/jquery.i18n/jquery.i18n.emitter.bidi.js"></script>
     <script src="antixss.js" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@webtor/embed-sdk-js/dist/index.min.js" charset="utf-8" async></script>
 
     <script>
-        $( document ).ready(function() {
-            $.i18n().load( {
+        $(document).ready(function () {
+            $.i18n().load({
                 en: {
                     "welcome": "Avengers..... Assemble!",
                     "name": "name",
@@ -42,11 +43,11 @@
                     "added_to_database": "こんにちは $1 さん、あなたをデータベースに追加しました。",
                     "database_contents": "データベースの内容: "
                 }
-            } );
+            });
             $('body').i18n();
-            $('#user_name').attr("placeholder", $.i18n('name') );
+            $('#user_name').attr("placeholder", $.i18n('name'));
         });
-        </script>
+    </script>
 
 </head>
 
@@ -58,6 +59,8 @@
             <input id="search_text" type="text" class="form-control" aria-describedby="sizing-addon1" value="" />
         </div>
         <p id="response" class="lead text-center"></p>
+
+        <div id="player" class="webtor"></div>
 
         <!-- <p id="databaseNames" class="lead text-center"></p> -->
     </div>
@@ -74,21 +77,21 @@
 
 
 <script>
-    	//Submit data when enter key is pressed
-        $('#search_text').keydown(function(e) {
-        	var name = $('#search_text').val();
-            if (e.which == 13 && name.length > 0) { //catch Enter key
-            	//POST request to API to create a new visitor entry in the database
-                $.ajax({
-				  method: "POST",
-				  url: "./api/visitors",
-				  contentType: "application/json",
-				  data: JSON.stringify({name: name })
-				})
-                .done(function(data) {
+    //Submit data when enter key is pressed
+    $('#search_text').keydown(function (e) {
+        var name = $('#search_text').val();
+        if (e.which == 13 && name.length > 0) { //catch Enter key
+            //POST request to API to create a new visitor entry in the database
+            $.ajax({
+                method: "POST",
+                url: "./api/visitors",
+                contentType: "application/json",
+                data: JSON.stringify({ name: name })
+            })
+                .done(function (data) {
                     $('#search-results').remove();
                     var table = $('<table>').addClass('foo').attr("id", "search-results");
-                    for(i=0; i<data.length; i++){
+                    for (i = 0; i < data.length; i++) {
                         var row = $('<tr>').addClass('bar');
                         row.append($('<td>').addClass('bar').text(data[i].title))
                         row.append($('<td>').addClass('bar').text(data[i].size))
@@ -97,56 +100,51 @@
                         row.click((e) => {
                             const torrentSelected = data[e.currentTarget.rowIndex]
                             console.log(data[e.currentTarget.rowIndex])
-                            $('tr:eq('+e.currentTarget.rowIndex+')').append($('<span>').html("<div class=\"loader loader--style3\" title=\"2\">\r\n  <svg version=\"1.1\" id=\"loader-1\" xmlns=\"http:\/\/www.w3.org\/2000\/svg\" xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" x=\"0px\" y=\"0px\"\r\n     width=\"40px\" height=\"40px\" viewBox=\"0 0 50 50\" style=\"enable-background:new 0 0 50 50;\" xml:space=\"preserve\">\r\n  <path fill=\"#000\" d=\"M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z\">\r\n    <animateTransform attributeType=\"xml\"\r\n      attributeName=\"transform\"\r\n      type=\"rotate\"\r\n      from=\"0 25 25\"\r\n      to=\"360 25 25\"\r\n      dur=\"0.6s\"\r\n      repeatCount=\"indefinite\"\/>\r\n    <\/path>\r\n  <\/svg>\r\n<\/div>"))
-                            $.ajax({
-                                method: "POST",
-                                url: "./api/getFiles",
-                                contentType: "application/json",
-                                data: JSON.stringify(data[e.currentTarget.rowIndex])
-                                }).done(function (torrentDetails) {
-                                    $('#torrentsDetailsSection').remove();
-                                    $('#loader-1').remove();
-                                    $('tr').css("background-color", "unset");
-                                    $('tr:nth-of-type(odd)').css("background-color", "#5a5a5a9e");
-                                    $('tr:eq('+e.currentTarget.rowIndex+')').css("background-color", "#9b0000");
-                                    console.log(torrentDetails)
-                                    const torrentDetailsJSON = JSON.parse(torrentDetails);
-                                    const files = torrentDetailsJSON.response;
-                                    var torrentsDetailsSection = $('<div>').addClass('torrentsDetailsSection').attr("id", "torrentsDetailsSection");
-                                    var ol = $('<ul>')
-                                    for (let index = 0; index < files.length; index++) {
-                                        const file = files[index];
-                                        ol.append($('<li>').addClass('torrent-list-file').append($('<div>').text(file.name)
-                                            .append($('<span>').addClass('copy-link')
-                                            .attr("id", index)
-                                            .click(function (event) {
-                                                console.log(event);
-                                                const file = files[event.target.id];
-                                                console.log(file)
-                                                copyToClipboard(window.location.host + '/getData?id=' + file.id +'&fileName=' +file.name + '&magnet=' + torrentDetailsJSON.torrentId)
-                                                alert('Link copied')
-                                                event.stopPropagation();
-                                            })).attr("id", index)).attr("id", index).click(e => {
-                                            const file = files[e.target.id];
-                                            console.log(file)
-
-                                            // append a video player
-                                            // var videoPlayerDiv = $('div').addClass('videoPlayerDiv')
-                                            var video = $('<video />', {
-                                                id: 'video',
-                                                src: './getData?id=' + file.id +'&fileName=' +file.name + '&magnet=' + torrentDetailsJSON.torrentId,
-                                                type: 'video/mp4',
-                                                controls: true
-                                            }).addClass('video');
-                                            // videoPlayerDiv.append(video)
-                                            // $('li:eq('+e.target.id+')', ol).after(videoPlayerDiv)
-                                            video.insertAfter($('#torrentsDetailsSection'))
-                                        }))
+                            var torrentsDetailsSection = $('<div>').addClass('webtor').attr("id", "player");
+                            $('tr:eq(' + e.currentTarget.rowIndex + ')', table).after(torrentsDetailsSection)
+                            window.webtor = window.webtor || [];
+                            window.webtor.push({
+                                id: 'player',
+                                magnet: torrentSelected.magnet,
+                                on: function (e) {
+                                    if (e.name == window.webtor.TORRENT_FETCHED) {
+                                        console.log('Torrent fetched!', e.data);
                                     }
-                                    torrentsDetailsSection.append(ol);
-                                    $('tr:eq('+e.currentTarget.rowIndex+')', table).after(torrentsDetailsSection)
-                                })
-
+                                    if (e.name == window.webtor.TORRENT_ERROR) {
+                                        console.log('Torrent error!');
+                                    }
+                                },
+                                // subtitles: [
+                                //     {
+                                //         srclang: 'en',
+                                //         label: 'Avengers',
+                                //         src: 'https://raw.githubusercontent.com/andreyvit/subtitle-tools/master/sample.srt',
+                                //         default: true,
+                                //     }
+                                // ],
+                                lang: 'en',
+                                i18n: {
+                                    en: {
+                                        common: {
+                                            "prepare to play": "Preparing Video Stream... Please Wait...",
+                                        },
+                                        stat: {
+                                            "seeding": "Seeding",
+                                            "waiting": "Client initialization",
+                                            "waiting for peers": "Waiting for peers",
+                                            "from": "from",
+                                        },
+                                    },
+                                },
+                            });
+                            // var ol = $('<ul>')
+                            // var video = $('<video />', {
+                            //     id: 'video',
+                            //     src: torrentSelected.magnet,
+                            //     type: 'video/mp4',
+                            //     controls: true
+                            // }).addClass('video');
+                            // video.insertAfter($('#torrentsDetailsSection'))
                         })
                         table.append(row);
                     }
@@ -155,50 +153,50 @@
                     // $('#nameInput').hide();
                     getNames();
                 });
-            }
-        });
+        }
+    });
 
-        function copyToClipboard(text) {
-            if (window.clipboardData && window.clipboardData.setData) {
-                // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
-                return clipboardData.setData("Text", text);
+    function copyToClipboard(text) {
+        if (window.clipboardData && window.clipboardData.setData) {
+            // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
+            return clipboardData.setData("Text", text);
 
+        }
+        else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
+            var textarea = document.createElement("textarea");
+            textarea.textContent = text;
+            textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in Microsoft Edge.
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                return document.execCommand("copy");  // Security exception may be thrown by some browsers.
             }
-            else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-                var textarea = document.createElement("textarea");
-                textarea.textContent = text;
-                textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in Microsoft Edge.
-                document.body.appendChild(textarea);
-                textarea.select();
-                try {
-                    return document.execCommand("copy");  // Security exception may be thrown by some browsers.
-                }
-                catch (ex) {
-                    console.warn("Copy to clipboard failed.", ex);
-                    return false;
-                }
-                finally {
-                    document.body.removeChild(textarea);
-                }
+            catch (ex) {
+                console.warn("Copy to clipboard failed.", ex);
+                return false;
+            }
+            finally {
+                document.body.removeChild(textarea);
             }
         }
+    }
 
-        var loader = "<div class=\"loader loader--style3\" title=\"2\">\r\n  <svg version=\"1.1\" id=\"loader-1\" xmlns=\"http:\/\/www.w3.org\/2000\/svg\" xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" x=\"0px\" y=\"0px\"\r\n     width=\"40px\" height=\"40px\" viewBox=\"0 0 50 50\" style=\"enable-background:new 0 0 50 50;\" xml:space=\"preserve\">\r\n  <path fill=\"#000\" d=\"M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z\">\r\n    <animateTransform attributeType=\"xml\"\r\n      attributeName=\"transform\"\r\n      type=\"rotate\"\r\n      from=\"0 25 25\"\r\n      to=\"360 25 25\"\r\n      dur=\"0.6s\"\r\n      repeatCount=\"indefinite\"\/>\r\n    <\/path>\r\n  <\/svg>\r\n<\/div>"
-        //Retrieve all the visitors from the database
-        function getNames(){
-          $.get("./api/visitors")
-              .done(function(data) {
-                  if(data.length > 0) {
-                    data.forEach(function(element, index) {
-                      data[index] = AntiXSS.sanitizeInput(element)
+    var loader = "<div class=\"loader loader--style3\" title=\"2\">\r\n  <svg version=\"1.1\" id=\"loader-1\" xmlns=\"http:\/\/www.w3.org\/2000\/svg\" xmlns:xlink=\"http:\/\/www.w3.org\/1999\/xlink\" x=\"0px\" y=\"0px\"\r\n     width=\"40px\" height=\"40px\" viewBox=\"0 0 50 50\" style=\"enable-background:new 0 0 50 50;\" xml:space=\"preserve\">\r\n  <path fill=\"#000\" d=\"M43.935,25.145c0-10.318-8.364-18.683-18.683-18.683c-10.318,0-18.683,8.365-18.683,18.683h4.068c0-8.071,6.543-14.615,14.615-14.615c8.072,0,14.615,6.543,14.615,14.615H43.935z\">\r\n    <animateTransform attributeType=\"xml\"\r\n      attributeName=\"transform\"\r\n      type=\"rotate\"\r\n      from=\"0 25 25\"\r\n      to=\"360 25 25\"\r\n      dur=\"0.6s\"\r\n      repeatCount=\"indefinite\"\/>\r\n    <\/path>\r\n  <\/svg>\r\n<\/div>"
+    //Retrieve all the visitors from the database
+    function getNames() {
+        $.get("./api/visitors")
+            .done(function (data) {
+                if (data.length > 0) {
+                    data.forEach(function (element, index) {
+                        data[index] = AntiXSS.sanitizeInput(element)
                     });
                     $('#databaseNames').html($.i18n('database_contents') + JSON.stringify(data));
-                  }
-              });
-          }
+                }
+            });
+    }
 
-          //Call getNames on page load.
-          getNames();
+    //Call getNames on page load.
+    getNames();
 
 
-    </script>
+</script>
